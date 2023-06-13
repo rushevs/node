@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  id         String   @id @default(uuid())
+  username   String   @unique
+  email      String   @unique
+  password   String
+  image     String?
+  blogs      blog[]
+  likes     like[]
+  followers  users[]   @relation(name: "Followers")
+  following  users[]   @relation(name: "Followers")
+  comments   comment[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model blog {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  body        String
+  tags        String[]
+  userId      String
+  likes      like[]
+  comments    comment[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model like {
+  userId    String
+  blogId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blog      blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@id([userId, blogId])
+  @@index([userId])
+  @@index([blogId])
+}
+
+// // nested comments
+model comment {
+  id       String   @id @default(uuid())
+  commentBody      String
+  userId    String
+  blogId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  parent_id String?
+
+  Children  comment[] @relation("Comment_Children")
+  parent    comment?  @relation("Comment_Children", fields: [parent_id], references: [id])
+
+  user      users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blog      blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  @@index([userId])
+  @@index([blogId])
+}
